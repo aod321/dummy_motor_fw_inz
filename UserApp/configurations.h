@@ -34,6 +34,8 @@ typedef struct Config_t
     bool enableMotorOnBoot;
     bool enableStallProtect;
     bool enableTempWatch;
+    int32_t drag_assist_gain;
+    int32_t drag_damping_gain;
 } BoardConfig_t;
 
 extern BoardConfig_t boardConfig;

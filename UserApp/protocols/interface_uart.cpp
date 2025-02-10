@@ -9,6 +9,7 @@ void OnUartCmd(uint8_t* _data, uint16_t _len)
 {
     float cur, pos, vel, time;
     char *token = NULL;
+    int32_t enable = atoi(token);
     switch (_data[0])
     {
         case 'c':
@@ -38,8 +39,14 @@ void OnUartCmd(uint8_t* _data, uint16_t _len)
             motor.controller->SetPositionSetPoint(
                 (int32_t) (pos * (float) motor.MOTOR_ONE_CIRCLE_SUBDIVIDE_STEPS));
             break;
+        // drag mode
+        case 'd':
+            token = strtok((char*) _data, "d");
+            enable = atoi(token);
+            motor.controller->requestMode = enable ? Motor::MODE_COMMAND_DRAG : Motor::MODE_STOP;
+            break;
         default:
-            printf("Only support [c] [v] [p] commands!\r\n");
+            printf("Only support [c] [v] [p] [d] commands!\r\n");
             break;
     }
 }

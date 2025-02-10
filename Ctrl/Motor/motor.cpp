@@ -138,6 +138,11 @@ void Motor::CloseLoopControlTick()
             case MODE_PWM_POSITION:
                 controller->CalcDceToOutput(controller->softPosition, controller->softVelocity);
                 break;
+
+            case MODE_COMMAND_DRAG:
+                controller->CalcDragToOutput(controller->softCurrent);
+                break;
+
             default:
                 break;
         }
@@ -186,6 +191,9 @@ void Motor::CloseLoopControlTick()
             case MODE_COMMAND_CURRENT:
                 motionPlanner.currentTracker.NewTask(controller->focCurrent);
                 break;
+            case MODE_COMMAND_DRAG:
+                motionPlanner.currentTracker.NewTask(controller->focCurrent);
+                break;
             case MODE_COMMAND_Trajectory:
                 motionPlanner.trajectoryTracker.NewTask(controller->estPosition, controller->estVelocity);
                 break;
@@ -223,6 +231,10 @@ void Motor::CloseLoopControlTick()
             controller->softVelocity = motionPlanner.velocityTracker.goVelocity;
             break;
         case MODE_COMMAND_CURRENT:
+            motionPlanner.currentTracker.CalcSoftGoal(controller->goalCurrent);
+            controller->softCurrent = motionPlanner.currentTracker.goCurrent;
+            break;
+        case MODE_COMMAND_DRAG:
             motionPlanner.currentTracker.CalcSoftGoal(controller->goalCurrent);
             controller->softCurrent = motionPlanner.currentTracker.goCurrent;
             break;
@@ -411,6 +423,31 @@ void Motor::Controller::CalcDceToOutput(int32_t _location, int32_t _speed)
     CalcCurrentToOutput(config->dce.output);
 }
 
+
+void Motor::Controller::CalcDragToOutput(int32_t current)
+{
+    const int32_t VELOCITY_DEADZONE = context->config.motionParams.ratedVelocity / 100; // 1% of rated velocity
+    const int32_t DRAG_ASSIST_GAIN = context->config.ctrlParams.drag.assistGain;     // mA/mA
+    const int32_t DAMPING_GAIN = context->config.ctrlParams.drag.dampingGain;           // mA/(steps/s)
+    
+    int32_t outputCurrent = 0;
+    
+    if (abs(estVelocity) > VELOCITY_DEADZONE)
+    {
+        // Assist force proportional to input force
+        outputCurrent = current * DRAG_ASSIST_GAIN;
+        
+        // Add damping force proportional to and opposing velocity
+        int32_t dampingCurrent = estVelocity * DAMPING_GAIN;
+        outputCurrent -= dampingCurrent;
+    }
+    else
+    {
+        outputCurrent = current;
+    }
+
+    CalcCurrentToOutput(outputCurrent);
+}
 
 void Motor::Controller::SetCtrlMode(Motor::Mode_t _mode)
 {
@@ -609,6 +646,9 @@ void Motor::Controller::Init()
     config->dce.integralRound = 0;
     config->dce.integralRemainder = 0;
     config->dce.output = 0;
+
+    config->drag.assistGain = 0;
+    config->drag.dampingGain = 0;
 }
 
 

@@ -50,6 +50,8 @@ void Main()
             .enableMotorOnBoot=false,
             .enableStallProtect=false,
             .enableTempWatch=false,
+            .drag_assist_gain = 100,
+            .drag_damping_gain = 5,
         };
         eeprom.put(0, boardConfig);
     }
@@ -68,6 +70,8 @@ void Main()
     motor.config.ctrlParams.dce.ki = boardConfig.dce_ki;
     motor.config.ctrlParams.dce.kd = boardConfig.dce_kd;
     motor.config.ctrlParams.stallProtectSwitch = boardConfig.enableStallProtect;
+    motor.config.ctrlParams.drag.assistGain = boardConfig.drag_assist_gain;
+    motor.config.ctrlParams.drag.dampingGain = boardConfig.drag_damping_gain;
 
 
 //    printf("encoderHomeOffset[%d] ratedCurrent[%d] ratedVelocity[%d] ratedVelocityAcc[%d]\r\n" , boardConfig.encoderHomeOffset, boardConfig.currentLimit, boardConfig.velocityLimit, boardConfig.velocityAcc);
@@ -200,6 +204,7 @@ void OnButton2Event(Button::Event _event)
             {
                 case Motor::MODE_COMMAND_CURRENT:
                 case Motor::MODE_PWM_CURRENT:
+                case Motor::MODE_COMMAND_DRAG:
                     motor.controller->SetCurrentSetPoint(0);
                     break;
                 case Motor::MODE_COMMAND_VELOCITY:

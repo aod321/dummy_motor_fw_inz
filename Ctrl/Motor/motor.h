@@ -19,6 +19,9 @@ public:
         config.motionParams.ratedVelocity = 30 * MOTOR_ONE_CIRCLE_SUBDIVIDE_STEPS;
         config.motionParams.ratedVelocityAcc = 1000 * MOTOR_ONE_CIRCLE_SUBDIVIDE_STEPS;
 
+        config.ctrlParams.drag.assistGain = 100; // mA/mA
+        config.ctrlParams.drag.dampingGain = 5; // mA/(steps/s)
+
         config.ctrlParams.stallProtectSwitch = false;
         config.ctrlParams.pid =
             Controller::PID_t{
@@ -53,6 +56,7 @@ public:
         MODE_COMMAND_VELOCITY,
         MODE_COMMAND_CURRENT,
         MODE_COMMAND_Trajectory,
+        MODE_COMMAND_DRAG,
         MODE_PWM_POSITION,
         MODE_PWM_VELOCITY,
         MODE_PWM_CURRENT,
@@ -98,9 +102,15 @@ public:
 
         typedef struct
         {
+            int32_t assistGain;
+            int32_t dampingGain;
+        } Drag_t;
+
+        typedef struct
+        {
             PID_t pid;
             DCE_t dce;
-
+            Drag_t drag;
             bool stallProtectSwitch;
         } Config_t;
 
@@ -170,6 +180,7 @@ public:
         void CalcCurrentToOutput(int32_t current);
         void CalcPidToOutput(int32_t _speed);
         void CalcDceToOutput(int32_t _location, int32_t _speed);
+        void CalcDragToOutput(int32_t current);
         void ClearIntegral() const;
 
         static int32_t CompensateAdvancedAngle(int32_t _vel);
