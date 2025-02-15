@@ -105,13 +105,6 @@ void OnCanCmd(uint8_t _cmd, uint8_t* _data, uint32_t _len)
             CAN_Send(&txHeader, _data);
         }
             break;
-        
-        case 0x08: // Set Drag Mode
-        {
-            motor.controller->requestMode = (*(uint32_t*) (RxData) == 1) ?
-                                            Motor::MODE_COMMAND_DRAG : Motor::MODE_STOP;
-        }
-            break;
             // 0x10~0x1F CMDs with Memory
         case 0x11:  // Set Node-ID and Store to EEPROM
             boardConfig.canNodeId = *(uint32_t*) (RxData);
@@ -183,23 +176,6 @@ void OnCanCmd(uint8_t _cmd, uint8_t* _data, uint32_t _len)
             if (_data[4])
                 boardConfig.configStatus = CONFIG_COMMIT;
             break;
-        
-        case 0x1C:  // Set Drag Assist Gain
-            motor.config.ctrlParams.drag.assistGain = *(int32_t*) (RxData);
-            boardConfig.drag_assist_gain = motor.config.ctrlParams.drag.assistGain;
-            if (_data[4])
-                boardConfig.configStatus = CONFIG_COMMIT;
-            break;
-        
-        case 0x1D:  // Set Drag Damping Gain
-            motor.config.ctrlParams.drag.dampingGain = *(int32_t*) (RxData);
-            boardConfig.drag_damping_gain = motor.config.ctrlParams.drag.dampingGain;
-            if (_data[4])
-                boardConfig.configStatus = CONFIG_COMMIT;
-            break;
-            
-
-
             // 0x20~0x2F Inquiry CMDs
         case 0x21: // Get Current
         {

@@ -4,7 +4,7 @@
 #include "Motor/motion_planner.h"
 #include "Sensor/Encoder/encoder_base.h"
 #include "Driver/driver_base.h"
-
+#include "configurations.h"
 class Motor
 {
 public:
@@ -19,8 +19,6 @@ public:
         config.motionParams.ratedVelocity = 30 * MOTOR_ONE_CIRCLE_SUBDIVIDE_STEPS;
         config.motionParams.ratedVelocityAcc = 1000 * MOTOR_ONE_CIRCLE_SUBDIVIDE_STEPS;
 
-        config.ctrlParams.drag.assistGain = 100; // mA/mA
-        config.ctrlParams.drag.dampingGain = 5; // mA/(steps/s)
 
         config.ctrlParams.stallProtectSwitch = false;
         config.ctrlParams.pid =
@@ -56,7 +54,6 @@ public:
         MODE_COMMAND_VELOCITY,
         MODE_COMMAND_CURRENT,
         MODE_COMMAND_Trajectory,
-        MODE_COMMAND_DRAG,
         MODE_PWM_POSITION,
         MODE_PWM_VELOCITY,
         MODE_PWM_CURRENT,
@@ -100,17 +97,11 @@ public:
             int32_t output;
         } DCE_t;
 
-        typedef struct
-        {
-            int32_t assistGain;
-            int32_t dampingGain;
-        } Drag_t;
 
         typedef struct
         {
             PID_t pid;
             DCE_t dce;
-            Drag_t drag;
             bool stallProtectSwitch;
         } Config_t;
 
@@ -155,6 +146,9 @@ public:
         int32_t realPositionLast{};
         int32_t estVelocity{};
         int32_t estVelocityIntegral{};
+        int32_t estVelocityLast{};
+        int32_t estAcceleration{}; // Estimate Acceleration
+        int32_t estAccelerationIntegral{}; // Estimate Acceleration Integral
         int32_t estLeadPosition{};
         int32_t estPosition{};
         int32_t estError{};
@@ -180,7 +174,6 @@ public:
         void CalcCurrentToOutput(int32_t current);
         void CalcPidToOutput(int32_t _speed);
         void CalcDceToOutput(int32_t _location, int32_t _speed);
-        void CalcDragToOutput(int32_t current);
         void ClearIntegral() const;
 
         static int32_t CompensateAdvancedAngle(int32_t _vel);
@@ -207,8 +200,6 @@ public:
 
 private:
     Controller controllerInstance = Controller(this);
-
-
     void CloseLoopControlTick();
 };
 
